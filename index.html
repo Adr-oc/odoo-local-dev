@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odoo Local Dev | by Adroc</title>
+<meta name="description" content="Guia completa para montar un entorno de desarrollo local de Odoo con Docker. Windows, Linux y macOS.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>
+:root{--bg-0:#06080d;--bg-1:#0c1018;--bg-2:#121824;--bg-3:#1a2233;--bg-code:#0d1117;--bg-code-head:#161b22;--border:#1c2536;--border-2:#283345;--tx-1:#e8edf5;--tx-2:#9ba8be;--tx-3:#5e6d85;--accent:#5bd779;--accent-dim:#143d1e;--accent-glow:rgba(91,215,121,.12);--green:#5bd779;--green-dim:rgba(91,215,121,.1);--amber:#fbbf24;--amber-dim:rgba(251,191,36,.08);--red:#fb7185;--red-dim:rgba(251,113,133,.08);--purple:#a78bfa;--orange:#fb923c;--sidebar-w:260px;--header-h:56px;--content-max:780px;--radius:10px}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border-2) var(--bg-0)}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg-0);color:var(--tx-1);line-height:1.72;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg-0)}::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:rgba(6,8,13,.82);backdrop-filter:blur(16px) saturate(180%);border-bottom:1px solid var(--border);z-index:200;display:flex;align-items:center;padding:0 1.5rem}
+.header-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}.logo:hover{text-decoration:none}
+.logo .logo-svg{width:28px;height:28px}
+.logo-name{font-weight:700;font-size:.95rem;color:var(--tx-1);letter-spacing:-.02em}.logo-name span{color:var(--green)}
+.header-right{display:flex;align-items:center;gap:12px}
+.gh-link{display:flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid var(--border);border-radius:8px;color:var(--tx-2);font-size:.78rem;font-weight:500;transition:all .2s}
+.gh-link:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}.gh-link i{font-size:16px}
+.menu-btn{display:none;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--tx-1);cursor:pointer;line-height:1}.menu-btn i{font-size:20px}
+
+#progress{position:fixed;top:var(--header-h);left:0;height:2px;background:linear-gradient(90deg,#34d399,#5bd779);z-index:201;transition:width .08s linear;box-shadow:0 0 8px rgba(91,215,121,.4)}
+
+.sidebar{position:fixed;top:var(--header-h);left:0;width:var(--sidebar-w);height:calc(100vh - var(--header-h));background:var(--bg-1);border-right:1px solid var(--border);overflow-y:auto;padding:1.2rem 0;z-index:50;transition:transform .3s ease}
+.sb-group{margin-bottom:.4rem}.sb-label{padding:.6rem 1.2rem .2rem;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--tx-3)}
+.sb-link{display:flex;align-items:center;gap:8px;padding:.38rem 1.2rem;color:var(--tx-2);text-decoration:none;font-size:.8rem;font-weight:400;border-left:2px solid transparent;transition:all .15s}
+.sb-link:hover{color:var(--tx-1);background:rgba(91,215,121,.04);text-decoration:none}
+.sb-link.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-glow);font-weight:500}
+.sb-link .n{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--tx-3);min-width:18px}.sb-link.active .n{color:var(--accent)}
+
+.main{margin-left:var(--sidebar-w);margin-top:var(--header-h);min-height:calc(100vh - var(--header-h))}
+.content{max-width:var(--content-max);margin:0 auto;padding:2rem 2rem 6rem}
+
+.hero{text-align:center;padding:5rem 0 3rem;position:relative}
+.hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-tag{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1rem;opacity:.9}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:900;letter-spacing:-.045em;line-height:1.08;margin-bottom:1rem}
+.hero h1 .grad{background:linear-gradient(135deg,var(--tx-1) 30%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.1rem;color:var(--tx-2);font-weight:300;max-width:500px;margin:0 auto 2.5rem;line-height:1.6}
+.hero-cmd{display:inline-flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem 1.4rem;font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);cursor:pointer;transition:all .2s;margin-bottom:2rem}
+.hero-cmd:hover{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+.hero-cmd .prompt{color:var(--tx-3)}.hero-cmd .copy-hint{font-size:.65rem;color:var(--tx-3);font-family:'Outfit',sans-serif}
+.tech-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:1.5rem}
+.tech-pill{display:flex;align-items:center;gap:5px;padding:5px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:20px;font-size:.72rem;font-weight:500;color:var(--tx-2);transition:all .25s}
+.tech-pill:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}.tech-pill i{font-size:14px}
+
+.os-selector{display:flex;gap:6px;margin:1.5rem 0 1rem;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;width:fit-content}
+.os-tab{padding:6px 18px;border-radius:7px;font-size:.82rem;font-weight:500;color:var(--tx-3);cursor:pointer;transition:all .2s;border:none;background:none;font-family:inherit;display:flex;align-items:center;gap:6px}
+.os-tab:hover{color:var(--tx-2)}.os-tab.active{background:var(--bg-3);color:var(--tx-1);box-shadow:0 1px 4px rgba(0,0,0,.3)}.os-tab i{font-size:16px}
+.os-content{display:none}.os-content.active{display:block;animation:fadeIn .3s ease}
+
+.section{margin-top:3.5rem;opacity:0;transform:translateY(16px);transition:all .5s ease}.section.visible{opacity:1;transform:translateY(0)}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:1.2rem;padding-bottom:.7rem;border-bottom:1px solid var(--border)}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent-dim);width:32px;height:32px;display:grid;place-items:center;border-radius:8px;flex-shrink:0}
+.section h2{font-size:1.45rem;font-weight:700;letter-spacing:-.02em}
+.section h3{font-size:1.05rem;font-weight:600;margin:1.8rem 0 .7rem;display:flex;align-items:center;gap:8px}.section h3::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px}
+.section h4{font-size:.92rem;font-weight:600;color:var(--tx-2);margin:1.3rem 0 .5rem}
+.section p{color:var(--tx-2);margin-bottom:.9rem;font-size:.92rem}.section p strong{color:var(--tx-1);font-weight:600}
+
+.step{display:flex;align-items:flex-start;gap:10px;margin:1rem 0 .5rem}
+.step-n{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:700;color:var(--bg-0);background:var(--accent);min-width:22px;height:22px;display:grid;place-items:center;border-radius:6px;flex-shrink:0;margin-top:1px}
+.step-t{font-weight:600;color:var(--tx-1);font-size:.92rem}
+
+.codeblock{margin:1rem 0 1.1rem;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--bg-code);transition:border-color .25s}.codeblock:hover{border-color:var(--border-2)}
+.codeblock-head{display:flex;align-items:center;justify-content:space-between;padding:.45rem .9rem;background:var(--bg-code-head);border-bottom:1px solid var(--border)}
+.codeblock-left{display:flex;align-items:center;gap:10px}
+.dots{display:flex;gap:4px}.dots i{width:9px;height:9px;border-radius:50%;display:block}.dots i:nth-child(1){background:#ff5f57;opacity:.65}.dots i:nth-child(2){background:#febc2e;opacity:.65}.dots i:nth-child(3){background:#28c840;opacity:.65}
+.codeblock-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--tx-3);font-weight:500}
+.copy-btn{display:flex;align-items:center;gap:5px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--tx-3);font-family:'JetBrains Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .2s;font-weight:500}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-glow)}.copy-btn.copied{color:var(--green);border-color:var(--green);background:var(--green-dim)}.copy-btn .ph{font-size:14px;line-height:1}
+.codeblock-body{padding:.9rem 1.1rem;overflow-x:auto}
+.codeblock-body pre{font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;color:#c9d1d9;white-space:pre;margin:0}
+.codeblock-body .cm{color:#6a737d}.codeblock-body .kw{color:#ff7b72}.codeblock-body .st{color:#a5d6ff}.codeblock-body .fn{color:#d2a8ff}.codeblock-body .vr{color:#ffa657}.codeblock-body .fl{color:#7ee787}.codeblock-body .nb{color:#79c0ff}
+code{font-family:'JetBrains Mono',monospace;font-size:.8rem;padding:1px 6px;background:var(--bg-3);border:1px solid var(--border);border-radius:4px;color:var(--accent)}
+
+.tbl-wrap{overflow-x:auto;margin:1rem 0;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+thead th{background:var(--bg-2);color:var(--tx-1);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--border)}
+tbody td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--tx-2)}tbody tr:last-child td{border-bottom:none}tbody tr:hover{background:rgba(91,215,121,.02)}
+td.mono{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--tx-1);font-weight:500}
+
+.callout{margin:1.1rem 0;padding:.9rem 1.1rem;border-radius:var(--radius);border-left:3px solid;font-size:.88rem}
+.callout-lbl{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;display:flex;align-items:center;gap:6px}.callout-lbl i{font-size:14px}
+.callout p{margin:0;font-size:.85rem}
+.callout.info{background:rgba(34,211,238,.05);border-color:#22d3ee}.callout.info .callout-lbl{color:#22d3ee}
+.callout.tip{background:var(--green-dim);border-color:var(--green)}.callout.tip .callout-lbl{color:var(--green)}
+.callout.warn{background:var(--amber-dim);border-color:var(--amber)}.callout.warn .callout-lbl{color:var(--amber)}
+.callout.danger{background:var(--red-dim);border-color:var(--red)}.callout.danger .callout-lbl{color:var(--red)}
+
+.file-tree{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.9;color:var(--tx-2)}.file-tree .f{color:var(--accent)}.file-tree .c{color:var(--tx-3);font-style:italic}
+
+.footer{text-align:center;padding:3rem 0 2rem;border-top:1px solid var(--border);margin-top:4rem}
+.footer-cmd{font-family:'JetBrains Mono',monospace;font-size:1.05rem;color:var(--accent);margin-bottom:.6rem}
+.footer-brand{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--tx-3);font-size:.82rem;margin-top:.8rem}.footer-brand .adroc-icon{width:18px;height:18px;opacity:.7}.footer-brand span{color:var(--green);font-weight:600}
+
+.cfg-panel{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-top:1rem}
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.cfg-field label{display:block;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--tx-3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em}
+.cfg-field input,.cfg-field select{width:100%;padding:8px 12px;background:var(--bg-code);border:1px solid var(--border);border-radius:8px;color:var(--tx-1);font-family:'JetBrains Mono',monospace;font-size:.85rem;outline:none;transition:border-color .2s}
+.cfg-field input:focus,.cfg-field select:focus{border-color:var(--accent)}
+.cfg-field select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e6d85' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.cfg-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.cfg-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg-0);border:1px solid var(--border);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent)}
+.cfg-pill i{font-size:12px;color:var(--tx-3)}
+.cfg-hint{font-size:.65rem;color:var(--tx-3);margin-top:2px;font-style:italic}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,.5)}
+  .main{margin-left:0}.menu-btn{display:flex;align-items:center}
+  .header-right .gh-link .gh-text{display:none}
+  .content{padding:1.5rem 1.2rem 4rem}.hero h1{font-size:2rem}.hero{padding:3rem 0 2rem}.os-selector{flex-wrap:wrap}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40}.overlay.open{display:block}
+}
+@media print{.header,.sidebar,#progress,.copy-btn,.menu-btn,.overlay{display:none!important}.main{margin-left:0!important}.section{opacity:1!important;transform:none!important}body{background:#fff;color:#111}.codeblock-body pre{color:#111}}
+
+.cfg{margin:2.5rem 0 1rem;background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.cfg-head{display:flex;align-items:center;gap:10px;padding:1rem 1.3rem;border-bottom:1px solid var(--border);background:var(--bg-2)}
+.cfg-head i{font-size:20px;color:var(--accent)}
+.cfg-head h3{font-size:.95rem;font-weight:700;margin:0}.cfg-head h3::before{display:none}
+.cfg-head p{font-size:.72rem;color:var(--tx-3);margin:0;margin-left:auto}
+.cfg-body{padding:1.2rem 1.3rem}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem 1.2rem}
+.cfg-field label{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tx-3);margin-bottom:.35rem}
+.cfg-field input,.cfg-field select{width:100%;padding:.5rem .75rem;background:var(--bg-0);border:1px solid var(--border);border-radius:8px;color:var(--tx-1);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;transition:border-color .2s}
+.cfg-field input:focus,.cfg-field select:focus{border-color:var(--accent)}
+.cfg-field select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235e6d85'%3E%3Cpath d='M6 8.5L1 3.5h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center}
+.cfg-field select option{background:var(--bg-1);color:var(--tx-1)}
+.cfg-toggle{display:flex;gap:4px;background:var(--bg-0);border:1px solid var(--border);border-radius:8px;padding:3px}
+.cfg-toggle button{flex:1;padding:.4rem .8rem;border:none;border-radius:6px;font-family:inherit;font-size:.78rem;font-weight:500;cursor:pointer;color:var(--tx-3);background:none;transition:all .2s}
+.cfg-toggle button.active{background:var(--accent);color:var(--bg-0);font-weight:600}
+.cfg-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:.9rem 1.3rem;border-top:1px solid var(--border);font-size:.75rem;color:var(--tx-3);background:var(--bg-2)}
+.cfg-preview code{font-size:.72rem;padding:2px 8px}
+.cfg-preview .lbl{font-weight:600;color:var(--tx-2)}
+.section.dimmed{opacity:.35;pointer-events:none;position:relative;transition:opacity .3s}
+.section.dimmed::after{content:'';position:absolute;inset:0;z-index:5}
+.dim-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:var(--bg-3);border:1px solid var(--border);border-radius:6px;font-size:.68rem;font-weight:600;color:var(--tx-3);margin-left:auto}
+@media(max-width:900px){.cfg-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="adroc-icon" viewBox="0 0 216.95833 197.1147">
+    <g transform="matrix(1.6041622,0,0,1.6041622,-44.317252,-27.401191)"><g transform="matrix(2.0404355,0,0,2.0404355,-99.10148,-83.745857)"><g transform="translate(45.57784,-16.498319)"><path style="fill:#ffffff;fill-opacity:1" d="m 27.922843,68.989071 -3.554305,2.338358 0.09353,17.399455 -7.67085,11.973426 17.212386,15.34119 13.095842,6.82904 5.425508,0.18706 12.90929,-6.73498 L 82.553101,100.70031 75.06932,88.820418 V 71.420964 l -3.648356,-2.338359 -13.376445,8.04447 -16.838249,-0.09353 z m 32.179432,19.223116 17.305403,11.225671 -14.873511,14.312302 -6.54792,-6.1743 -4.209562,-11.973427 z m -20.486088,0.187068 8.325073,7.390247 -4.209046,11.973428 -6.548437,6.1743 -14.873511,-14.312303 z m 6.832141,19.465995 h 6.625435 l 1.72961,2.99517 -5.053955,5.05343 -5.208467,-4.74544 z"/><path d="m 41.253296,95.204525 -5.916952,3.297473 -0.04651,1.309997 5.916434,4.045745 v -2.05827 l -3.391007,-2.572452 3.414262,-2.104781 z" style="fill:#5bd779;fill-opacity:1"/><path d="m 59.049626,95.204525 0.02377,1.917712 3.414262,2.104781 -3.391008,2.572452 v 2.05827 l 5.916435,-4.045745 -0.04651,-1.309997 z" style="fill:#5bd779;fill-opacity:1"/></g></g></g>
+  </symbol>
+</svg>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="#" class="logo"><svg class="logo-svg"><use href="#adroc-icon"/></svg><div class="logo-name">odoo<span>.local</span></div></a>
+    <div class="header-right">
+      <a href="https://github.com" class="gh-link" target="_blank"><i class="ph ph-github-logo"></i><span class="gh-text">GitHub</span></a>
+      <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"><i class="ph ph-list"></i></button>
+    </div>
+  </div>
+</header>
+<div id="progress" style="width:0%"></div>
+<div class="overlay" onclick="toggleSidebar()"></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-group"><div class="sb-label">Inicio</div><a href="#hero" class="sb-link active"><span class="n">00</span> Introduccion</a><a href="#s0" class="sb-link"><span class="n" style="font-size:10px"><i class="ph ph-sliders-horizontal"></i></span> Configurador</a></div>
+  <div class="sb-group"><div class="sb-label">Preparacion</div><a href="#s1" class="sb-link"><span class="n">01</span> Requisitos</a><a href="#s2" class="sb-link"><span class="n">02</span> Instalar Docker</a><a href="#s3" class="sb-link"><span class="n">03</span> Editor de codigo</a></div>
+  <div class="sb-group"><div class="sb-label">Proyecto</div><a href="#s4" class="sb-link"><span class="n">04</span> Crear proyecto</a><a href="#s5" class="sb-link"><span class="n">05</span> odoo.conf</a><a href="#s6" class="sb-link"><span class="n">06</span> Dockerfile</a><a href="#s7" class="sb-link"><span class="n">07</span> Compose Community</a><a href="#s8" class="sb-link"><span class="n">08</span> Compose Enterprise</a></div>
+  <div class="sb-group"><div class="sb-label">Ejecucion</div><a href="#s9" class="sb-link"><span class="n">09</span> Levantar entorno</a><a href="#s10" class="sb-link"><span class="n">10</span> Acceder a Odoo</a><a href="#s11" class="sb-link"><span class="n">11</span> Hot Reload</a></div>
+  <div class="sb-group"><div class="sb-label">Avanzado</div><a href="#s12" class="sb-link"><span class="n">12</span> Multiples instancias</a><a href="#s13" class="sb-link"><span class="n">13</span> Comandos utiles</a><a href="#s14" class="sb-link"><span class="n">14</span> Troubleshooting</a></div>
+</nav>
+
+<main class="main"><div class="content">
+
+<section class="hero" id="hero">
+  <div class="hero-tag">Guia de entorno de desarrollo</div>
+  <h1><span class="grad">Odoo Local Dev<br>con Docker</span></h1>
+  <p class="hero-sub">Configuracion completa paso a paso para Windows, Linux y macOS. Un comando y tu entorno esta listo.</p>
+  <div class="hero-cmd" onclick="copyText('docker compose up -d',this)"><span class="prompt">$</span> docker compose up -d <span class="copy-hint">click para copiar</span></div>
+  <div class="tech-row">
+    <span class="tech-pill"><i class="ph ph-terminal-window" style="color:var(--accent)"></i> WSL 2</span>
+    <span class="tech-pill"><i class="ph ph-anchor" style="color:var(--green)"></i> Docker</span>
+    <span class="tech-pill"><i class="ph ph-stack" style="color:var(--purple)"></i> Compose</span>
+    <span class="tech-pill"><i class="ph ph-database" style="color:var(--amber)"></i> PostgreSQL</span>
+    <span class="tech-pill"><i class="ph ph-cube" style="color:var(--orange)"></i> Odoo</span>
+    <span class="tech-pill"><i class="ph ph-code" style="color:var(--red)"></i> VS Code</span>
+  </div>
+</section>
+
+<section class="section visible" id="s0" style="margin-top:2rem">
+  <div class="section-head">
+    <span class="section-num" style="font-size:.85rem"><i class="ph ph-sliders-horizontal"></i></span>
+    <h2>Configurador</h2>
+  </div>
+  <p>Personaliza los parametros de tu proyecto. Todos los bloques de codigo se actualizan en tiempo real — listos para copiar y pegar directamente en tu terminal.</p>
+  <div class="cfg-panel">
+    <div class="cfg-grid">
+      <div class="cfg-field">
+        <label>Nombre del proyecto</label>
+        <input type="text" id="cfg-project" value="mi_cliente" spellcheck="false" autocomplete="off">
+        <div class="cfg-hint">sin espacios ni acentos</div>
+      </div>
+      <div class="cfg-field">
+        <label>Version Odoo</label>
+        <select id="cfg-odoo-ver"><option value="15">15</option><option value="16">16</option><option value="17" selected>17</option><option value="18">18</option><option value="19">19</option></select>
+      </div>
+      <div class="cfg-field">
+        <label>Version PostgreSQL</label>
+        <select id="cfg-pg-ver"><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16" selected>16</option><option value="17">17</option></select>
+      </div>
+      <div class="cfg-field">
+        <label>Puerto Odoo</label>
+        <input type="number" id="cfg-odoo-port" value="8069" min="1024" max="65535">
+      </div>
+      <div class="cfg-field">
+        <label>Puerto PostgreSQL</label>
+        <input type="number" id="cfg-pg-port" value="5432" min="1024" max="65535">
+      </div>
+      <div class="cfg-field">
+        <label>Directorio base</label>
+        <input type="text" id="cfg-basedir" value="~/proyectos" spellcheck="false" autocomplete="off">
+      </div>
+    </div>
+    <div class="cfg-preview">
+      <div class="cfg-pill"><i class="ph ph-folder"></i> <span id="p-folder">~/proyectos/mi_cliente</span></div>
+      <div class="cfg-pill"><i class="ph ph-database"></i> <span id="p-db">db_mi_cliente</span></div>
+      <div class="cfg-pill"><i class="ph ph-cube"></i> <span id="p-odoo">odoo_mi_cliente</span></div>
+      <div class="cfg-pill"><i class="ph ph-globe"></i> <span id="p-url">localhost:8069</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="cfg" id="configurator">
+  <div class="cfg-head">
+    <i class="ph ph-sliders-horizontal"></i>
+    <h3>Configura tu entorno</h3>
+    <p>Los bloques de codigo se actualizan en tiempo real</p>
+  </div>
+  <div class="cfg-body">
+    <div class="cfg-grid">
+      <div class="cfg-field">
+        <label>Nombre de instancia</label>
+        <input type="text" id="cfg-name" value="mi_cliente" placeholder="ej: megapolizas" oninput="cfgUpdate()">
+      </div>
+      <div class="cfg-field">
+        <label>Version de Odoo</label>
+        <select id="cfg-ver" onchange="cfgUpdate()">
+          <option value="15">Odoo 15</option>
+          <option value="16">Odoo 16</option>
+          <option value="17" selected>Odoo 17</option>
+          <option value="18">Odoo 18</option>
+          <option value="19">Odoo 19</option>
+        </select>
+      </div>
+      <div class="cfg-field">
+        <label>Edicion</label>
+        <div class="cfg-toggle" id="cfg-edition">
+          <button class="active" data-val="community" onclick="cfgEdition(this)">Community</button>
+          <button data-val="enterprise" onclick="cfgEdition(this)">Enterprise</button>
+        </div>
+      </div>
+      <div class="cfg-field">
+        <label>Directorio base</label>
+        <input type="text" id="cfg-dir" value="~/proyectos" placeholder="~/proyectos" oninput="cfgUpdate()">
+      </div>
+    </div>
+  </div>
+  <div class="cfg-preview">
+    <span class="lbl">Contenedores:</span> <code id="prev-odoo">odoo_mi_cliente</code> <code id="prev-db">db_mi_cliente</code>
+    <span class="lbl">DB:</span> <code id="prev-dbname">mi_cliente_dev</code>
+    <span class="lbl">Imagen:</span> <code id="prev-img">odoo:17</code>
+    <span class="lbl">Acceso:</span> <code>localhost:8069</code>
+  </div>
+</div>
+
+<section class="section" id="s1"><div class="section-head"><span class="section-num">01</span><h2>Requisitos Previos</h2></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Componente</th><th>Minimo</th><th>Recomendado</th></tr></thead><tbody>
+    <tr><td class="mono">RAM</td><td>8 GB</td><td>16 GB</td></tr>
+    <tr><td class="mono">Almacenamiento</td><td>20 GB libres</td><td>SSD con 50 GB+</td></tr>
+    <tr><td class="mono">Procesador</td><td>64-bit + virtualizacion</td><td>4+ cores</td></tr>
+    <tr><td class="mono">Docker</td><td>v20+</td><td>Ultima estable</td></tr>
+    <tr><td class="mono">Docker Compose</td><td>v2+</td><td>Ultima estable</td></tr>
+  </tbody></table></div>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> Importante</div><p><strong>Windows:</strong> Virtualizacion debe estar habilitada en BIOS/UEFI (Intel VT-x o AMD-V). <strong>macOS:</strong> Apple Silicon (M1+) funciona nativamente. Intel Macs necesitan Rosetta en algunos casos.</p></div>
+</section>
+
+<section class="section" id="s2"><div class="section-head"><span class="section-num">02</span><h2>Instalar Docker</h2></div>
+  <p>Selecciona tu sistema operativo:</p>
+  <div class="os-selector" data-group="install">
+    <button class="os-tab active" onclick="switchOS('install','win',this)"><i class="ph ph-windows-logo"></i> Windows</button>
+    <button class="os-tab" onclick="switchOS('install','linux',this)"><i class="ph ph-linux-logo"></i> Linux</button>
+    <button class="os-tab" onclick="switchOS('install','mac',this)"><i class="ph ph-apple-logo"></i> macOS</button>
+  </div>
+  <div class="os-content active" data-group="install" data-os="win">
+    <h3>Instalar WSL 2</h3><p>WSL 2 te da un kernel Linux real dentro de Windows, necesario para Docker.</p>
+    <div class="step"><span class="step-n">1</span><span class="step-t">Abrir PowerShell como Administrador</span></div><p>Clic derecho en Inicio, <strong>Terminal (Administrador)</strong></p>
+    <div class="step"><span class="step-n">2</span><span class="step-t">Instalar WSL</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">PowerShell (Admin)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">wsl</span> <span class="fl">--install</span></pre></div></div>
+    <p>Esto instala WSL 2 con Ubuntu. Reinicia el equipo despues.</p>
+    <div class="step"><span class="step-n">3</span><span class="step-t">Verificar version</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">PowerShell</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">wsl</span> <span class="fl">--list</span> <span class="fl">--verbose</span>
+<span class="cm"># Deberias ver tu distro con VERSION 2</span></pre></div></div>
+    <h3>Abrir Ubuntu en la Terminal</h3><p>Tres formas de acceder:</p>
+    <p><strong>Opcion A:</strong> Buscar "Ubuntu" en el menu Inicio.<br><strong>Opcion B:</strong> En Windows Terminal, nueva pestana, seleccionar Ubuntu.<br><strong>Opcion C:</strong> Desde PowerShell:</p>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">PowerShell / CMD</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">wsl</span></pre></div></div>
+    <h3>Docker Desktop para Windows</h3>
+    <div class="step"><span class="step-n">4</span><span class="step-t">Descargar e instalar Docker Desktop</span></div><p>Desde <a href="https://www.docker.com/products/docker-desktop/" target="_blank">docker.com/products/docker-desktop</a></p>
+    <div class="step"><span class="step-n">5</span><span class="step-t">Habilitar integracion WSL 2</span></div>
+    <p>En Docker Desktop, Settings:<br><strong>General</strong> — "Use WSL 2 based engine" activado<br><strong>Resources, WSL Integration</strong> — Activar tu distro Ubuntu</p>
+    <div class="step"><span class="step-n">6</span><span class="step-t">Verificar desde WSL</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal Ubuntu (WSL)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">docker</span> <span class="fl">--version</span>
+<span class="fn">docker</span> compose version
+<span class="fn">docker</span> run hello-world</pre></div></div>
+    <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Nota</div><p>Docker Desktop debe estar corriendo en Windows para que los comandos funcionen dentro de WSL 2.</p></div>
+    <div class="step"><span class="step-n">7</span><span class="step-t">Actualizar paquetes de Ubuntu</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal Ubuntu (WSL)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">sudo</span> <span class="fn">apt</span> update && <span class="fn">sudo</span> apt upgrade <span class="fl">-y</span></pre></div></div>
+    <div class="callout tip"><div class="callout-lbl"><i class="ph ph-lightning"></i> Rendimiento</div><p>Trabaja siempre dentro del filesystem de Linux (<code>~/proyectos/...</code>), nunca desde <code>/mnt/c/</code>. El acceso a archivos en /mnt/c/ desde Docker puede ser hasta 10x mas lento.</p></div>
+  </div>
+  <div class="os-content" data-group="install" data-os="linux">
+    <h3>Docker Engine en Linux</h3><p>En Linux usas Docker Engine directamente. No necesitas Docker Desktop.</p>
+    <div class="step"><span class="step-n">1</span><span class="step-t">Instalar Docker Engine (Ubuntu/Debian)</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Agregar repositorio oficial de Docker</span>
+<span class="fn">sudo</span> <span class="fn">apt-get</span> update
+<span class="fn">sudo</span> <span class="fn">apt-get</span> install ca-certificates curl
+<span class="fn">sudo</span> <span class="fn">install</span> <span class="fl">-m</span> 0755 <span class="fl">-d</span> /etc/apt/keyrings
+<span class="fn">sudo</span> <span class="fn">curl</span> -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  <span class="fl">-o</span> /etc/apt/keyrings/docker.asc
+<span class="fn">sudo</span> <span class="fn">chmod</span> a+r /etc/apt/keyrings/docker.asc
+
+<span class="fn">echo</span> "deb [arch=$(dpkg <span class="fl">--print-architecture</span>) \
+  signed-by=/etc/apt/keyrings/docker.asc] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && <span class="fn">echo</span> "$VERSION_CODENAME") stable" | \
+  <span class="fn">sudo</span> <span class="fn">tee</span> /etc/apt/sources.list.d/docker.list > /dev/null
+
+<span class="cm"># Instalar Docker Engine + Compose</span>
+<span class="fn">sudo</span> <span class="fn">apt-get</span> update
+<span class="fn">sudo</span> <span class="fn">apt-get</span> install docker-ce docker-ce-cli \
+  containerd.io docker-buildx-plugin docker-compose-plugin</pre></div></div>
+    <div class="step"><span class="step-n">2</span><span class="step-t">Ejecutar Docker sin sudo</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">sudo</span> groupadd docker
+<span class="fn">sudo</span> usermod -aG docker $USER
+<span class="fn">newgrp</span> docker
+
+<span class="cm"># Verificar</span>
+<span class="fn">docker</span> run hello-world</pre></div></div>
+    <div class="step"><span class="step-n">3</span><span class="step-t">Habilitar inicio automatico</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">sudo</span> <span class="fn">systemctl</span> enable docker
+<span class="fn">sudo</span> <span class="fn">systemctl</span> enable containerd</pre></div></div>
+    <div class="callout tip"><div class="callout-lbl"><i class="ph ph-lightning"></i> Rendimiento</div><p>Linux es el entorno con mejor rendimiento para Docker — sin capas de virtualizacion. Todo corre nativamente en el kernel.</p></div>
+  </div>
+  <div class="os-content" data-group="install" data-os="mac">
+    <h3>Docker Desktop para macOS</h3>
+    <div class="step"><span class="step-n">1</span><span class="step-t">Descargar Docker Desktop</span></div><p>Desde <a href="https://www.docker.com/products/docker-desktop/" target="_blank">docker.com/products/docker-desktop</a>. Selecciona la version para tu chip (Apple Silicon o Intel).</p>
+    <div class="step"><span class="step-n">2</span><span class="step-t">Instalar y configurar</span></div><p>Arrastra Docker a Applications, abrelo y sigue el asistente. En <strong>Settings, Resources</strong>, asigna al menos 4 GB de RAM y 2 CPUs.</p>
+    <div class="step"><span class="step-n">3</span><span class="step-t">Verificar instalacion</span></div>
+    <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">docker</span> <span class="fl">--version</span>
+<span class="fn">docker</span> compose version
+<span class="fn">docker</span> run hello-world</pre></div></div>
+    <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Apple Silicon</div><p>En Macs con M1/M2/M3/M4, Docker corre las imagenes x86 mediante emulacion Rosetta 2. Si hay issues, habilita "Use Rosetta for x86_64/amd64 emulation" en Docker Desktop, Settings, General.</p></div>
+  </div>
+</section>
+
+<section class="section" id="s3"><div class="section-head"><span class="section-num">03</span><h2>Editor de Codigo</h2></div>
+  <p>Recomendamos VS Code por su integracion nativa con WSL y Docker.</p>
+  <div class="step"><span class="step-n">1</span><span class="step-t">Instalar VS Code</span></div><p>Desde <a href="https://code.visualstudio.com/" target="_blank">code.visualstudio.com</a>. Marca <strong>"Add to PATH"</strong> durante la instalacion.</p>
+  <div class="step"><span class="step-n">2</span><span class="step-t">Extensiones esenciales</span></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Extension</th><th>Para que</th><th>Solo Windows</th></tr></thead><tbody>
+    <tr><td class="mono">WSL</td><td>Conectar VS Code al filesystem de Linux</td><td>Si</td></tr>
+    <tr><td class="mono">Docker</td><td>Gestionar contenedores desde VS Code</td><td>No</td></tr>
+    <tr><td class="mono">Python</td><td>Soporte para desarrollo Odoo</td><td>No</td></tr>
+    <tr><td class="mono">XML Tools</td><td>Formateo de vistas Odoo</td><td>No</td></tr>
+  </tbody></table></div>
+  <div class="step"><span class="step-n">3</span><span class="step-t">Abrir proyecto desde terminal</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">cd</span> ~/proyectos/mi_proyecto
+<span class="fn">code</span> .</pre></div></div>
+  <p>En Windows, veras <strong>"WSL: Ubuntu"</strong> en la esquina inferior izquierda de VS Code, confirmando la conexion remota.</p>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> code . no funciona?</div><p>Si el comando <code>code</code> no se reconoce dentro de WSL, lo mas probable es que VS Code no fue instalado con <strong>"Add to PATH"</strong> marcado, o la extension <strong>WSL</strong> no esta instalada. Reinicia la terminal despues de corregirlo. Ver la seccion <a href="#s14">Troubleshooting</a> para un diagnostico completo.</p></div>
+</section>
+
+<section class="section" id="s4"><div class="section-head"><span class="section-num">04</span><h2>Crear el Proyecto</h2></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Crear directorio base</span>
+<span class="fn">mkdir</span> <span class="fl">-p</span> ~/proyectos
+
+<span class="cm"># Crear proyecto (cambia "mi_cliente" por tu nombre)</span>
+<span class="fn">cd</span> ~/proyectos
+<span class="fn">mkdir</span> mi_cliente && <span class="fn">cd</span> mi_cliente
+
+<span class="cm"># Crear archivos base</span>
+<span class="fn">touch</span> docker-compose.yml odoo.conf
+
+<span class="cm"># Solo para Enterprise:</span>
+<span class="cm"># touch Dockerfile</span>
+<span class="cm"># cp /ruta/al/odoo_XX.deb .</span>
+
+<span class="cm"># Abrir en VS Code</span>
+<span class="fn">code</span> .</pre></div></div>
+  <h3>Estructura del proyecto</h3>
+  <div class="file-tree"><span class="f">mi_cliente/</span>
+├── docker-compose.yml       <span class="c"># Definicion de servicios</span>
+├── odoo.conf                <span class="c"># Configuracion de Odoo</span>
+├── Dockerfile               <span class="c"># (Solo Enterprise)</span>
+├── odoo_XX.deb              <span class="c"># (Solo Enterprise)</span>
+├── <span class="f">mi_modulo_custom/</span>        <span class="c"># Tus modulos</span>
+│   ├── __init__.py
+│   └── __manifest__.py
+└── <span class="f">otro_modulo/</span>
+    ├── __init__.py
+    └── __manifest__.py</div>
+  <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Nota</div><p>El directorio raiz del proyecto se monta como <code>/mnt/extra-addons</code> dentro del contenedor. Cualquier modulo que coloques ahi sera visible para Odoo.</p></div>
+</section>
+
+<section class="section" id="s5"><div class="section-head"><span class="section-num">05</span><h2>Archivo odoo.conf</h2></div>
+  <p>Configuracion del servidor Odoo. Crea este archivo en la raiz del proyecto:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">odoo.conf</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="kw">[options]</span>
+<span class="vr">addons_path</span> = <span class="st">/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons</span>
+<span class="vr">data_dir</span> = <span class="st">/var/lib/odoo</span>
+<span class="vr">db_host</span> = <span class="st">db</span>
+<span class="vr">db_port</span> = <span class="nb">5432</span>
+<span class="vr">db_user</span> = <span class="st">odoo</span>
+<span class="vr">db_password</span> = <span class="st">odoo</span>
+<span class="vr">db_maxconn</span> = <span class="nb">64</span>
+<span class="vr">admin_passwd</span> = <span class="st">admin</span>
+<span class="vr">limit_memory_hard</span> = <span class="nb">2684354560</span>
+<span class="vr">limit_memory_soft</span> = <span class="nb">2147483648</span>
+<span class="vr">limit_time_cpu</span> = <span class="nb">600</span>
+<span class="vr">limit_time_real</span> = <span class="nb">1200</span>
+<span class="vr">max_cron_threads</span> = <span class="nb">1</span>
+<span class="vr">workers</span> = <span class="nb">0</span>
+<span class="vr">proxy_mode</span> = <span class="nb">False</span>
+<span class="vr">list_db</span> = <span class="nb">True</span></pre></div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Parametro</th><th>Descripcion</th></tr></thead><tbody>
+    <tr><td class="mono">db_host</td><td>Nombre del servicio PostgreSQL en docker-compose (ej: <code>db</code>)</td></tr>
+    <tr><td class="mono">db_maxconn</td><td>Maximo de conexiones simultaneas a la BD</td></tr>
+    <tr><td class="mono">admin_passwd</td><td>Contrasena maestra para gestion de bases de datos</td></tr>
+    <tr><td class="mono">workers = 0</td><td>Modo single-thread — ideal para desarrollo local</td></tr>
+    <tr><td class="mono">list_db</td><td>Permite listar y seleccionar BDs en el login</td></tr>
+    <tr><td class="mono">addons_path</td><td>Rutas donde Odoo busca modulos (separadas por coma)</td></tr>
+  </tbody></table></div>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> Importante</div><p>El valor de <code>db_host</code> debe coincidir <strong>exactamente</strong> con el nombre del servicio de PostgreSQL en tu <code>docker-compose.yml</code>.</p></div>
+</section>
+
+<section class="section enterprise-only" id="s6"><div class="section-head"><span class="section-num">06</span><h2>Dockerfile (Solo Enterprise)</h2></div>
+  <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Community Edition</div><p>Si usas Community Edition, salta esta seccion. No necesitas Dockerfile — se usa la imagen oficial directamente.</p></div>
+  <p>Para Enterprise, necesitas una imagen custom con el paquete <code>.deb</code> instalado:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Dockerfile</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="kw">FROM</span> odoo:17
+
+<span class="kw">USER</span> root
+
+<span class="cm"># Copiar e instalar el .deb de Enterprise</span>
+<span class="kw">COPY</span> odoo_17.deb /tmp/odoo_17.deb
+<span class="kw">RUN</span> dpkg -i /tmp/odoo_17.deb || apt-get install -f -y && \
+    rm /tmp/odoo_17.deb
+
+<span class="kw">USER</span> odoo</pre></div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Version</th><th>Imagen Base</th><th>Archivo .deb</th><th>PostgreSQL</th></tr></thead><tbody>
+    <tr><td class="mono">15</td><td>odoo:15</td><td>odoo_15.deb</td><td>13 – 14</td></tr>
+    <tr><td class="mono">16</td><td>odoo:16</td><td>odoo_16.deb</td><td>14 – 15</td></tr>
+    <tr><td class="mono">17</td><td>odoo:17</td><td>odoo_17.deb</td><td>15 – 16</td></tr>
+    <tr><td class="mono">18</td><td>odoo:18</td><td>odoo_18.deb</td><td>16 – 17</td></tr>
+    <tr><td class="mono">19</td><td>odoo:19</td><td>odoo_19.deb</td><td>16 – 17</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="section community-only" id="s7"><div class="section-head"><span class="section-num">07</span><h2>Docker Compose — Community</h2></div>
+  <p>Template listo para copiar. Usa la imagen oficial de Odoo directamente:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">docker-compose.yml — Community</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="kw">services</span>:
+  <span class="kw">db</span>:
+    <span class="kw">image</span>: <span class="st">postgres:16</span>
+    <span class="kw">container_name</span>: <span class="st">db_mi_cliente</span>
+    <span class="kw">restart</span>: <span class="st">unless-stopped</span>
+    <span class="kw">environment</span>:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    <span class="kw">ports</span>:
+      - <span class="st">"5432:5432"</span>
+    <span class="kw">volumes</span>:
+      - db_data:/var/lib/postgresql/data
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="st">"CMD-SHELL"</span>, <span class="st">"pg_isready -U odoo"</span>]
+      <span class="kw">interval</span>: <span class="st">10s</span>
+      <span class="kw">timeout</span>: <span class="st">5s</span>
+      <span class="kw">retries</span>: <span class="nb">5</span>
+
+  <span class="kw">odoo</span>:
+    <span class="kw">image</span>: <span class="st">odoo:17</span>
+    <span class="kw">container_name</span>: <span class="st">odoo_mi_cliente</span>
+    <span class="kw">depends_on</span>:
+      <span class="kw">db</span>:
+        <span class="kw">condition</span>: <span class="st">service_healthy</span>
+    <span class="kw">ports</span>:
+      - <span class="st">"8069:8069"</span>
+    <span class="kw">volumes</span>:
+      - ./:/mnt/extra-addons
+      - odoo_web_data:/var/lib/odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf
+    <span class="kw">environment</span>:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_MAXCONN=64
+    <span class="kw">command</span>: [<span class="st">"odoo"</span>, <span class="st">"--dev=reload,qweb,werkzeug,xml"</span>]
+    <span class="kw">restart</span>: <span class="st">unless-stopped</span>
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="st">"CMD"</span>, <span class="st">"curl"</span>, <span class="st">"-f"</span>, <span class="st">"http://localhost:8069/web/health"</span>]
+      <span class="kw">interval</span>: <span class="st">30s</span>
+      <span class="kw">timeout</span>: <span class="st">10s</span>
+      <span class="kw">retries</span>: <span class="nb">3</span>
+      <span class="kw">start_period</span>: <span class="st">60s</span>
+
+<span class="kw">volumes</span>:
+  <span class="kw">db_data</span>:
+    <span class="kw">driver</span>: <span class="st">local</span>
+  <span class="kw">odoo_web_data</span>:
+    <span class="kw">driver</span>: <span class="st">local</span></pre></div></div>
+  <h3>Desglose</h3>
+  <h4>Servicio: db (PostgreSQL)</h4><p><code>POSTGRES_INITDB_ARGS</code> asegura codificacion UTF-8 con collation C (requisito de Odoo). El healthcheck verifica que PostgreSQL este listo antes de arrancar Odoo.</p>
+  <h4>Servicio: odoo</h4><p><code>depends_on</code> con <code>condition: service_healthy</code> garantiza que Odoo no arranque hasta que la BD este lista. El flag <code>--dev=reload,qweb,werkzeug,xml</code> habilita hot-reload.</p>
+  <h4>Volumenes</h4>
+  <div class="tbl-wrap"><table><thead><tr><th>Volumen</th><th>Proposito</th></tr></thead><tbody>
+    <tr><td class="mono">./:/mnt/extra-addons</td><td>Monta tu directorio como addons de Odoo</td></tr>
+    <tr><td class="mono">odoo_web_data:/var/lib/odoo</td><td>Persiste sesiones y filestore</td></tr>
+    <tr><td class="mono">./odoo.conf:/etc/odoo/odoo.conf</td><td>Inyecta tu configuracion</td></tr>
+    <tr><td class="mono">db_data:/var/lib/postgresql/data</td><td>Persiste la base de datos</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="section enterprise-only" id="s8"><div class="section-head"><span class="section-num">08</span><h2>Docker Compose — Enterprise</h2></div>
+  <p>La diferencia clave: usa <code>build: .</code> para construir la imagen con el Dockerfile, en lugar de una imagen directa.</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">docker-compose.yml — Enterprise</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="kw">services</span>:
+  <span class="kw">db</span>:
+    <span class="kw">image</span>: <span class="st">postgres:16</span>
+    <span class="kw">container_name</span>: <span class="st">db_mi_cliente</span>
+    <span class="kw">restart</span>: <span class="st">unless-stopped</span>
+    <span class="kw">environment</span>:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    <span class="kw">ports</span>:
+      - <span class="st">"5432:5432"</span>
+    <span class="kw">volumes</span>:
+      - db_data:/var/lib/postgresql/data
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="st">"CMD-SHELL"</span>, <span class="st">"pg_isready -U odoo"</span>]
+      <span class="kw">interval</span>: <span class="st">10s</span>
+      <span class="kw">timeout</span>: <span class="st">5s</span>
+      <span class="kw">retries</span>: <span class="nb">5</span>
+
+  <span class="kw">odoo</span>:
+    <span class="kw">build</span>: .                                 <span class="cm"># Usa el Dockerfile</span>
+    <span class="kw">image</span>: <span class="st">odoo_enterprise:17</span>                <span class="cm"># Tag personalizado</span>
+    <span class="kw">container_name</span>: <span class="st">odoo_mi_cliente</span>
+    <span class="kw">depends_on</span>:
+      <span class="kw">db</span>:
+        <span class="kw">condition</span>: <span class="st">service_healthy</span>
+    <span class="kw">ports</span>:
+      - <span class="st">"8069:8069"</span>
+    <span class="kw">volumes</span>:
+      - ./:/mnt/extra-addons
+      - odoo_web_data:/var/lib/odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./odoo_17.deb:/mnt/extra-addons/odoo_17.deb
+    <span class="kw">environment</span>:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_MAXCONN=64
+    <span class="kw">command</span>: [<span class="st">"odoo"</span>, <span class="st">"--dev=reload,qweb,werkzeug,xml"</span>]
+    <span class="kw">restart</span>: <span class="st">unless-stopped</span>
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="st">"CMD"</span>, <span class="st">"curl"</span>, <span class="st">"-f"</span>, <span class="st">"http://localhost:8069/web/health"</span>]
+      <span class="kw">interval</span>: <span class="st">30s</span>
+      <span class="kw">timeout</span>: <span class="st">10s</span>
+      <span class="kw">retries</span>: <span class="nb">3</span>
+      <span class="kw">start_period</span>: <span class="st">90s</span>
+
+<span class="kw">volumes</span>:
+  <span class="kw">db_data</span>:
+    <span class="kw">driver</span>: <span class="st">local</span>
+  <span class="kw">odoo_web_data</span>:
+    <span class="kw">driver</span>: <span class="st">local</span></pre></div></div>
+  <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Nota</div><p>El <code>start_period</code> de Enterprise (90s) es mayor que Community (60s) porque la imagen con modulos Enterprise tarda mas en inicializar la primera vez.</p></div>
+</section>
+
+<section class="section" id="s9"><div class="section-head"><span class="section-num">09</span><h2>Levantar el Entorno</h2></div>
+  <div class="step"><span class="step-n">1</span><span class="step-t">Navegar al proyecto</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">cd</span> ~/proyectos/mi_cliente</pre></div></div>
+  <div class="step"><span class="step-n">2</span><span class="step-t">Levantar contenedores</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Primera vez (construye imagen si hay Dockerfile)</span>
+<span class="fn">docker</span> compose up <span class="fl">--build</span>
+
+<span class="cm"># Ejecuciones posteriores</span>
+<span class="fn">docker</span> compose up
+
+<span class="cm"># En segundo plano (detached)</span>
+<span class="fn">docker</span> compose up <span class="fl">-d</span></pre></div></div>
+  <div class="step"><span class="step-n">3</span><span class="step-t">Verificar estado</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">docker</span> compose ps
+<span class="cm"># Ambos servicios deben estar Up (healthy)</span></pre></div></div>
+  <div class="step"><span class="step-n">4</span><span class="step-t">Ver logs en tiempo real</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Todos los servicios</span>
+<span class="fn">docker</span> compose logs <span class="fl">-f</span>
+
+<span class="cm"># Solo Odoo</span>
+<span class="fn">docker</span> compose logs <span class="fl">-f</span> odoo</pre></div></div>
+</section>
+
+<section class="section" id="s10"><div class="section-head"><span class="section-num">10</span><h2>Acceder a Odoo</h2></div>
+  <p>Con los contenedores corriendo, abre tu navegador:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Navegador</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre>http://localhost:8069</pre></div></div>
+  <h3>Crear la base de datos</h3>
+  <div class="tbl-wrap"><table><thead><tr><th>Campo</th><th>Valor Sugerido</th><th>Nota</th></tr></thead><tbody>
+    <tr><td class="mono">Master Password</td><td>admin</td><td>Definido en odoo.conf (admin_passwd)</td></tr>
+    <tr><td class="mono">Database Name</td><td>mi_cliente_dev</td><td>Sin espacios ni caracteres especiales</td></tr>
+    <tr><td class="mono">Email</td><td>admin@example.com</td><td>Email del administrador</td></tr>
+    <tr><td class="mono">Password</td><td>admin</td><td>Contrasena del admin</td></tr>
+    <tr><td class="mono">Language</td><td>Spanish (GT)</td><td>Idioma de la interfaz</td></tr>
+    <tr><td class="mono">Country</td><td>Guatemala</td><td>Localizacion fiscal</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="section" id="s11"><div class="section-head"><span class="section-num">11</span><h2>Hot Reload</h2></div>
+  <p>El flag <code>--dev=reload,qweb,werkzeug,xml</code> en el command del docker-compose habilita la recarga automatica:</p>
+  <div class="tbl-wrap"><table><thead><tr><th>Flag</th><th>Que hace</th></tr></thead><tbody>
+    <tr><td class="mono">reload</td><td>Reinicia el servidor cuando detecta cambios en archivos <code>.py</code></td></tr>
+    <tr><td class="mono">qweb</td><td>Recarga plantillas QWeb sin reiniciar</td></tr>
+    <tr><td class="mono">werkzeug</td><td>Activa el debugger interactivo en el navegador</td></tr>
+    <tr><td class="mono">xml</td><td>Recarga vistas XML sin reiniciar</td></tr>
+  </tbody></table></div>
+  <div class="callout tip"><div class="callout-lbl"><i class="ph ph-lightning"></i> Flujo de trabajo</div><p>Cambios en <strong>.py</strong> — el servidor se reinicia automaticamente. Cambios en <strong>XML/QWeb</strong> — recarga automatica en la mayoria de casos. Si los cambios en XML no se reflejan, actualiza el modulo: <code>docker compose exec odoo odoo -d mi_cliente_dev -u mi_modulo --stop-after-init</code></p></div>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> Windows + WSL</div><p>El hot-reload depende de <strong>inotify</strong> (notificaciones del filesystem). Si trabajas desde <code>/mnt/c/</code>, inotify no funciona y el hot-reload falla. Trabaja siempre desde <code>~/proyectos/</code> dentro de WSL.</p></div>
+</section>
+
+<section class="section" id="s12"><div class="section-head"><span class="section-num">12</span><h2>Multiples Instancias</h2></div>
+  <p>Para correr varios proyectos simultaneamente, cambia puertos, nombres de contenedores y volumenes:</p>
+  <div class="tbl-wrap"><table><thead><tr><th>Proyecto</th><th>Puerto Odoo</th><th>Puerto PG</th><th>Acceso</th></tr></thead><tbody>
+    <tr><td class="mono">Cliente A</td><td>8069:8069</td><td>5432:5432</td><td>localhost:8069</td></tr>
+    <tr><td class="mono">Cliente B</td><td>8070:8069</td><td>5433:5432</td><td>localhost:8070</td></tr>
+    <tr><td class="mono">Cliente C</td><td>8071:8069</td><td>5434:5432</td><td>localhost:8071</td></tr>
+    <tr><td class="mono">Cliente D</td><td>8072:8069</td><td>5435:5432</td><td>localhost:8072</td></tr>
+  </tbody></table></div>
+  <h3>Que cambiar en cada proyecto</h3>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Cambios por instancia</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># 1. Nombres de contenedores (unicos)</span>
+<span class="kw">container_name</span>: <span class="st">db_cliente_b</span>
+<span class="kw">container_name</span>: <span class="st">odoo_cliente_b</span>
+
+<span class="cm"># 2. Puertos (puerto_host:puerto_contenedor)</span>
+<span class="kw">ports</span>:
+  - <span class="st">"5433:5432"</span>          <span class="cm"># PostgreSQL</span>
+<span class="kw">ports</span>:
+  - <span class="st">"8070:8069"</span>          <span class="cm"># Odoo</span>
+
+<span class="cm"># 3. Nombres de volumenes (unicos)</span>
+<span class="kw">volumes</span>:
+  <span class="kw">db_data_cliente_b</span>:
+    <span class="kw">driver</span>: <span class="st">local</span>
+  <span class="kw">odoo_web_data_cliente_b</span>:
+    <span class="kw">driver</span>: <span class="st">local</span></pre></div></div>
+  <div class="callout tip"><div class="callout-lbl"><i class="ph ph-folder-simple"></i> Organizacion</div><p>Cada proyecto en su propio directorio: <code>~/proyectos/cliente_a/</code>, <code>~/proyectos/cliente_b/</code>, etc. Cada uno con su docker-compose.yml, odoo.conf y modulos.</p></div>
+</section>
+
+<section class="section" id="s13"><div class="section-head"><span class="section-num">13</span><h2>Comandos Utiles</h2></div>
+  <h3>Gestion de contenedores</h3>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Levantar</span>
+<span class="fn">docker</span> compose up <span class="fl">-d</span>
+
+<span class="cm"># Detener (conserva datos)</span>
+<span class="fn">docker</span> compose down
+
+<span class="cm"># Detener y BORRAR volumenes (elimina BD y filestore)</span>
+<span class="fn">docker</span> compose down <span class="fl">-v</span>
+
+<span class="cm"># Reiniciar un servicio</span>
+<span class="fn">docker</span> compose restart odoo
+
+<span class="cm"># Reconstruir imagen</span>
+<span class="fn">docker</span> compose up <span class="fl">--build</span> <span class="fl">-d</span>
+
+<span class="cm"># Estado</span>
+<span class="fn">docker</span> compose ps</pre></div></div>
+  <h3>Acceso y depuracion</h3>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Shell dentro del contenedor Odoo</span>
+<span class="fn">docker</span> compose exec odoo bash
+
+<span class="cm"># Consola PostgreSQL</span>
+<span class="fn">docker</span> compose exec db psql <span class="fl">-U</span> odoo <span class="fl">-d</span> mi_base
+
+<span class="cm"># Actualizar modulo</span>
+<span class="fn">docker</span> compose exec odoo odoo <span class="fl">-d</span> mi_cliente_dev <span class="fl">-u</span> mi_modulo <span class="fl">--stop-after-init</span>
+
+<span class="cm"># Instalar modulo</span>
+<span class="fn">docker</span> compose exec odoo odoo <span class="fl">-d</span> mi_cliente_dev <span class="fl">-i</span> mi_modulo <span class="fl">--stop-after-init</span></pre></div></div>
+  <h3>Backups</h3>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Backup</span>
+<span class="fn">docker</span> compose exec db pg_dump <span class="fl">-U</span> odoo mi_cliente_dev > backup_$(date +%Y%m%d).sql
+
+<span class="cm"># Restaurar</span>
+<span class="fn">cat</span> backup.sql | <span class="fn">docker</span> compose exec <span class="fl">-T</span> db psql <span class="fl">-U</span> odoo mi_cliente_dev
+
+<span class="cm"># Limpiar espacio Docker</span>
+<span class="fn">docker</span> system df
+<span class="fn">docker</span> system prune</pre></div></div>
+  <div class="callout danger"><div class="callout-lbl"><i class="ph ph-prohibit"></i> Cuidado</div><p><code>docker compose down -v</code> elimina <strong>todo</strong>: bases de datos, filestore, sesiones. Solo usalo cuando quieras empezar desde cero. Para detener sin perder datos: <code>docker compose down</code> (sin -v).</p></div>
+</section>
+
+<section class="section" id="s14"><div class="section-head"><span class="section-num">14</span><h2>Troubleshooting</h2></div>
+  <h3>"port is already allocated"</h3><p>Otro contenedor o servicio usa el mismo puerto:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Ver que usa el puerto</span>
+<span class="fn">sudo</span> <span class="fn">lsof</span> <span class="fl">-i</span> :8069
+<span class="cm"># o</span>
+<span class="fn">docker</span> ps <span class="fl">-a</span>
+
+<span class="cm"># Solucion: detener contenedor conflictivo o cambiar puerto</span></pre></div></div>
+  <h3>Odoo no conecta a PostgreSQL</h3><p>Verifica que <code>db_host</code> en odoo.conf coincida con el nombre del servicio de BD en docker-compose.</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">docker</span> compose ps
+<span class="fn">docker</span> compose logs db</pre></div></div>
+  <h3>Hot reload no funciona</h3><p>Asegurate de que <code>--dev=reload</code> este en el command. En Windows/WSL, verifica que estas trabajando desde el filesystem de Linux (<code>~/</code>), no desde <code>/mnt/c/</code>.</p>
+  <h3>Docker Desktop no inicia (Windows)</h3>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">PowerShell (Admin)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">wsl</span> <span class="fl">--shutdown</span>
+<span class="fn">wsl</span> <span class="fl">--update</span>
+<span class="cm"># Luego reiniciar Docker Desktop</span></pre></div></div>
+  <h3><code>code .</code> no funciona en WSL</h3>
+  <p>El comando <code>code</code> dentro de WSL es un wrapper que invoca VS Code de Windows. Si falla, hay cuatro causas habituales:</p>
+  <div class="step"><span class="step-n">1</span><span class="step-t">VS Code no fue instalado con "Add to PATH"</span></div>
+  <p>Reinstala VS Code y marca la casilla <strong>"Add to PATH (requires shell restart)"</strong>. Esto registra el comando <code>code</code> en el PATH de Windows, que WSL hereda automaticamente.</p>
+  <div class="step"><span class="step-n">2</span><span class="step-t">La extension WSL no esta instalada</span></div>
+  <p>Abre VS Code en Windows, ve a Extensions (Ctrl+Shift+X) y busca <strong>"WSL"</strong> de Microsoft. Sin esta extension, VS Code no puede conectarse al entorno Linux de WSL.</p>
+  <div class="step"><span class="step-n">3</span><span class="step-t">PATH no heredado correctamente</span></div>
+  <p>En algunos casos WSL no hereda el PATH de Windows. Agrega esto a tu <code>~/.bashrc</code>:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">~/.bashrc</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Agregar VS Code al PATH de WSL</span>
+<span class="fn">export</span> PATH="$PATH:/mnt/c/Users/TU_USUARIO/AppData/Local/Programs/Microsoft VS Code/bin"</pre></div></div>
+  <p>Reemplaza <code>TU_USUARIO</code> con tu nombre de usuario de Windows. Luego ejecuta <code>source ~/.bashrc</code> o abre una nueva terminal.</p>
+  <div class="step"><span class="step-n">4</span><span class="step-t">Verificar interop WSL-Windows</span></div>
+  <p>Si nada funciona, verifica que la interoperabilidad este habilitada:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal Ubuntu (WSL)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">cat</span> /proc/sys/fs/binfmt_misc/WSLInterop
+<span class="cm"># Debe mostrar "enabled"</span>
+
+<span class="cm"># Si no esta habilitado:</span>
+<span class="fn">sudo</span> <span class="fn">bash</span> <span class="fl">-c</span> 'echo 1 > /proc/sys/fs/binfmt_misc/WSLInterop'</pre></div></div>
+
+
+  <h3><code>code .</code> no abre VS Code desde WSL</h3>
+  <p>Este es uno de los problemas mas comunes al configurar WSL por primera vez. El comando <code>code</code> no se reconoce porque VS Code no esta en el PATH de Linux.</p>
+  <div class="step"><span class="step-n">1</span><span class="step-t">Verificar si code esta en el PATH</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal Ubuntu (WSL)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="fn">which</span> code
+<span class="cm"># Si no devuelve nada, code no esta en el PATH</span></pre></div></div>
+  <div class="step"><span class="step-n">2</span><span class="step-t">Solucion rapida: reinstalar desde VS Code en Windows</span></div>
+  <p>Abre VS Code <strong>en Windows</strong>, presiona <code>Ctrl+Shift+P</code> y busca:</p>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">VS Code Command Palette</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre>Shell Command: Install 'code' command in PATH</pre></div></div>
+  <p>Despues cierra <strong>todas</strong> las terminales WSL y abri una nueva.</p>
+  <div class="step"><span class="step-n">3</span><span class="step-t">Si sigue sin funcionar: verificar el PATH manualmente</span></div>
+  <div class="codeblock"><div class="codeblock-head"><div class="codeblock-left"><div class="dots"><i></i><i></i><i></i></div><span class="codeblock-title">Terminal Ubuntu (WSL)</span></div><button class="copy-btn" onclick="copyCode(this)"><i class="ph ph-copy"></i> Copiar</button></div><div class="codeblock-body"><pre><span class="cm"># Verificar si la ruta de VS Code esta en el PATH</span>
+<span class="fn">echo</span> $PATH | <span class="fn">grep</span> <span class="fl">-i</span> "vscode"
+
+<span class="cm"># Si no aparece, agregala manualmente a ~/.bashrc</span>
+<span class="fn">echo</span> 'export PATH="$PATH:/mnt/c/Users/TU_USUARIO/AppData/Local/Programs/Microsoft VS Code/bin"' >> ~/.bashrc
+<span class="fn">source</span> ~/.bashrc</pre></div></div>
+  <div class="callout info"><div class="callout-lbl"><i class="ph ph-info"></i> Nota</div><p>Cambia <code>TU_USUARIO</code> por tu nombre de usuario de Windows. Puedes verificarlo con <code>cmd.exe /c echo %USERNAME%</code> desde WSL.</p></div>
+  <div class="step"><span class="step-n">4</span><span class="step-t">Alternativa: abrir desde Windows directamente</span></div>
+  <p>Si nada funciona, podes abrir VS Code desde Windows y conectarte a WSL manualmente:</p>
+  <p><strong>Ctrl+Shift+P</strong> en VS Code, luego <strong>"WSL: Connect to WSL"</strong>. Una vez conectado, <strong>File, Open Folder</strong> y navega a tu proyecto Linux.</p>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> Importante</div><p>Asegurate de tener la <strong>extension WSL</strong> instalada en VS Code. Sin ella, no puede conectarse al filesystem de Linux.</p></div>
+
+  <h3>Rendimiento lento</h3>
+  <div class="callout warn"><div class="callout-lbl"><i class="ph ph-warning"></i> Regla de oro</div><p><strong>Windows:</strong> Trabaja dentro del filesystem Linux (<code>~/proyectos/</code>). <strong>macOS:</strong> Usa "VirtioFS" en Docker Desktop, Settings, General, File sharing. <strong>Linux:</strong> Ya tienes rendimiento nativo.</p></div>
+</section>
+
+<div class="footer">
+  <div class="footer-cmd">$ docker compose up -d</div>
+  <div class="footer-brand"><svg class="adroc-icon"><use href="#adroc-icon"/></svg> by <a href="https://portfolio.adrocgt.com/" target="_blank" style="color:var(--green);font-weight:600;text-decoration:none">Adroc</a></div>
+</div>
+
+</div></main>
+
+<script>
+function copyCode(b){const p=b.closest('.codeblock').querySelector('pre');navigator.clipboard.writeText(p.textContent).then(()=>{b.innerHTML='<i class="ph ph-check"></i> Copiado';b.classList.add('copied');setTimeout(()=>{b.innerHTML='<i class="ph ph-copy"></i> Copiar';b.classList.remove('copied')},2000)})}
+function copyText(t,e){navigator.clipboard.writeText(t).then(()=>{const h=e.querySelector('.copy-hint');if(h){h.textContent='copiado';setTimeout(()=>h.textContent='click para copiar',1500)}})}
+function switchOS(g,o,b){b.closest('.os-selector').querySelectorAll('.os-tab').forEach(t=>t.classList.remove('active'));b.classList.add('active');document.querySelectorAll(`.os-content[data-group="${g}"]`).forEach(c=>c.classList.toggle('active',c.dataset.os===o))}
+const sl=document.querySelectorAll('.sb-link'),ss=document.querySelectorAll('.section,.hero,.cfg');
+function uA(){let c='';ss.forEach(s=>{if(s.getBoundingClientRect().top<120)c=s.id});sl.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+c))}
+function rv(){document.querySelectorAll('.section').forEach(s=>{if(s.getBoundingClientRect().top<window.innerHeight-60)s.classList.add('visible')})}
+function uP(){const h=document.documentElement.scrollHeight-window.innerHeight;document.getElementById('progress').style.width=(window.scrollY/h)*100+'%'}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.querySelector('.overlay').classList.toggle('open')}
+sl.forEach(l=>l.addEventListener('click',()=>{document.getElementById('sidebar').classList.remove('open');document.querySelector('.overlay').classList.remove('open')}));
+window.addEventListener('scroll',()=>{uA();rv();uP()},{passive:true});
+
+/* ═══ CONFIGURATOR + TEMPLATE SYSTEM ═══ */
+const pgMap={15:'14',16:'15',17:'16',18:'16',19:'17'};
+const tpl=new Map();
+document.querySelectorAll('.codeblock-body pre').forEach(pre=>{tpl.set(pre,pre.innerHTML)});
+const heroCmd=document.querySelector('.hero-cmd');
+const heroCmdTpl=heroCmd?heroCmd.innerHTML:'';
+
+function cfgUpdate(){
+  const name=(document.getElementById('cfg-name').value||'mi_cliente').trim().replace(/[^a-zA-Z0-9_-]/g,'_')||'mi_cliente';
+  const ver=document.getElementById('cfg-ver').value;
+  const pgVer=pgMap[ver];
+  const dir=document.getElementById('cfg-dir').value||'~/proyectos';
+  
+  // Update preview
+  document.getElementById('prev-odoo').textContent='odoo_'+name;
+  document.getElementById('prev-db').textContent='db_'+name;
+  document.getElementById('prev-dbname').textContent=name+'_dev';
+  document.getElementById('prev-img').textContent='odoo:'+ver;
+  
+  // Update all code blocks
+  tpl.forEach((orig,pre)=>{
+    let h=orig;
+    h=h.replaceAll('mi_cliente',name);
+    h=h.replaceAll('odoo:17','odoo:'+ver);
+    h=h.replaceAll('odoo:15','odoo:'+ver);
+    h=h.replaceAll('odoo:16','odoo:'+ver);
+    h=h.replaceAll('odoo:18','odoo:'+ver);
+    h=h.replaceAll('odoo:19','odoo:'+ver);
+    h=h.replaceAll('postgres:16','postgres:'+pgVer);
+    h=h.replaceAll('postgres:14','postgres:'+pgVer);
+    h=h.replaceAll('postgres:15','postgres:'+pgVer);
+    h=h.replaceAll('postgres:17','postgres:'+pgVer);
+    h=h.replaceAll('odoo_17.deb','odoo_'+ver+'.deb');
+    h=h.replaceAll('odoo_enterprise:17','odoo_enterprise:'+ver);
+    h=h.replaceAll('~/proyectos',dir);
+    pre.innerHTML=h;
+  });
+  
+  // Update DB creation table
+  document.querySelectorAll('table td.mono').forEach(td=>{
+    if(td.textContent==='Database Name'){
+      const next=td.nextElementSibling;
+      if(next)next.textContent=name+'_dev';
+    }
+  });
+  
+  // Update hero command display (text only, not template)
+  const heroSpan=document.querySelector('.hero-cmd');
+  if(heroSpan){
+    const hint=heroSpan.querySelector('.copy-hint');
+    const hintText=hint?hint.textContent:'';
+  }
+}
+
+function cfgEdition(btn){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const isEnt=btn.dataset.val==='enterprise';
+  document.querySelectorAll('.enterprise-only').forEach(s=>s.classList.toggle('dimmed',!isEnt));
+  document.querySelectorAll('.community-only').forEach(s=>s.classList.toggle('dimmed',isEnt));
+}
+
+// Initialize: dim enterprise sections by default
+document.querySelectorAll('.enterprise-only').forEach(s=>s.classList.add('dimmed'));
+
+// Configurador — dynamic code blocks
+document.querySelectorAll('.codeblock-body pre').forEach(function(p){p.dataset.tpl=p.innerHTML});
+document.querySelectorAll('.file-tree').forEach(function(f){f.dataset.tpl=f.innerHTML});
+var PG_MAP={'15':'14','16':'15','17':'16','18':'16','19':'17'};
+function getCfg(){return{project:document.getElementById('cfg-project')?document.getElementById('cfg-project').value||'mi_cliente':'mi_cliente',ov:document.getElementById('cfg-odoo-ver')?document.getElementById('cfg-odoo-ver').value:'17',pv:document.getElementById('cfg-pg-ver')?document.getElementById('cfg-pg-ver').value:'16',op:document.getElementById('cfg-odoo-port')?document.getElementById('cfg-odoo-port').value||'8069':'8069',pp:document.getElementById('cfg-pg-port')?document.getElementById('cfg-pg-port').value||'5432':'5432',bd:document.getElementById('cfg-basedir')?document.getElementById('cfg-basedir').value||'~/proyectos':'~/proyectos'}}
+function applyR(h,c){if(h.indexOf('mi_cliente')===-1&&h.indexOf('odoo:17')===-1&&h.indexOf('8069')===-1&&h.indexOf('postgres:16')===-1&&h.indexOf('~/proyectos')===-1)return h;h=h.split('localhost:8069/web/health').join('__HC__');h=h.split('mi_cliente_dev').join(c.project+'_dev');h=h.split('db_mi_cliente').join('db_'+c.project);h=h.split('odoo_mi_cliente').join('odoo_'+c.project);h=h.split('mi_cliente').join(c.project);h=h.split('odoo_enterprise:17').join('odoo_enterprise:'+c.ov);h=h.split('odoo:17').join('odoo:'+c.ov);h=h.split('odoo_17').join('odoo_'+c.ov);h=h.split('postgres:16').join('postgres:'+c.pv);h=h.split('"8069:8069"').join('"'+c.op+':8069"');h=h.split('"5432:5432"').join('"'+c.pp+':5432"');h=h.split('localhost:8069').join('localhost:'+c.op);h=h.split('lsof -i :8069').join('lsof -i :'+c.op);h=h.split('~/proyectos').join(c.bd);h=h.split('__HC__').join('localhost:8069/web/health');return h}
+function updateCfg(){var c=getCfg();var pf=document.getElementById('p-folder');var pd=document.getElementById('p-db');var po=document.getElementById('p-odoo');var pu=document.getElementById('p-url');if(pf)pf.textContent=c.bd+'/'+c.project;if(pd)pd.textContent='db_'+c.project;if(po)po.textContent='odoo_'+c.project;if(pu)pu.textContent='localhost:'+c.op;document.querySelectorAll('.codeblock-body pre').forEach(function(p){if(p.dataset.tpl)p.innerHTML=applyR(p.dataset.tpl,c)});document.querySelectorAll('.file-tree').forEach(function(f){if(f.dataset.tpl)f.innerHTML=applyR(f.dataset.tpl,c)})}
+var cfgOdoo=document.getElementById('cfg-odoo-ver');if(cfgOdoo)cfgOdoo.addEventListener('change',function(){var s=document.getElementById('cfg-pg-ver');if(s&&PG_MAP[this.value])s.value=PG_MAP[this.value];updateCfg()});
+document.querySelectorAll('#s0 input,#s0 select').forEach(function(e){e.addEventListener('input',updateCfg);e.addEventListener('change',updateCfg)});
+
+rv();
+</script>
+</body>
+</html>
